@@ -172,6 +172,25 @@ class RAGService:
             return merged
         return merged[:_RETRIEVAL_QUERY_MAX_CHARS]
 
+    def _normalize_query(self, query: str) -> str:
+        """
+        Normalize query to uppercase common acronyms since the embedding model
+        (dangvantuan/vietnamese-embedding) is highly case-sensitive.
+        """
+        import re
+        replacements = {
+            "pt": "PT", "hvt": "HVT", "đbp": "ĐBP", "lhp": "LHP",
+            "nct": "NCT", "ntt": "NTT", "uvk": "UVK", "pđl": "PĐL",
+            "qt": "QT", "ac": "AC", "nkkn": "NKKN", "hg": "HG",
+            "ltk": "LTK", "bh": "BH", "đn": "ĐN", "ct": "CT",
+            "gym": "Gym"
+        }
+        normalized = query
+        for k, v in replacements.items():
+            pattern = re.compile(r'\b' + re.escape(k) + r'\b', re.IGNORECASE)
+            normalized = pattern.sub(v, normalized)
+        return normalized
+
     async def query(
         self,
         question: str,
@@ -194,7 +213,8 @@ class RAGService:
             ChatResponse with answer and source documents.
         """
         history = history or []
-        retrieval_query = self._build_retrieval_query(question, history)
+        normalized_question = self._normalize_query(question)
+        retrieval_query = self._build_retrieval_query(normalized_question, history)
 
         # 1. Embed the retrieval query
         query_embedding = self._embedding.embed_query(retrieval_query)

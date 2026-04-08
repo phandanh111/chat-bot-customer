@@ -1,40 +1,21 @@
-## Giá PT tại tất cả chi nhánh The New Gym
+## Bảng Giá Huấn Luyện Viên Cá Nhân (PT) Toàn Hệ Thống
 
-Dịch vụ huấn luyện viên cá nhân (PT) tại The New Gym áp dụng thống nhất một mức giá cho tất cả 15 chi nhánh trên toàn hệ thống.
-Giá PT áp dụng tại: Hoàng Văn Thụ (HVT) Tân Bình, Điện Biên Phủ (ĐBP) Quận 10, Lê Hồng Phong (LHP) Quận 5, Nguyễn Chí Thanh (NCT) Quận 10, Nguyễn Thị Thập (NTT) Quận 7, Ung Văn Khiêm (UVK) Bình Thạnh, Phan Đăng Lưu (PĐL) Phú Nhuận, Quang Trung (QT) Gò Vấp, Âu Cơ (AC) Tân Phú, Nam Kỳ Khởi Nghĩa (NKKN) Quận 3, Hậu Giang (HG) Quận 6, Lý Thường Kiệt (LTK) Quận 11, Đồng Nai (BH) Biên Hòa, Đà Nẵng (ĐN), Cần Thơ (CT).
-Các gói PT hiện có: PT Silver (399.000 VNĐ), PT Gold (8 buổi - 4.999.000 VNĐ), PT Platinum (24 buổi - 12.000.000 VNĐ), PT Diamond (72 buổi - 28.200.000 VNĐ).
+Dịch vụ Huấn luyện viên cá nhân (PT) tại The New Gym áp dụng thống nhất MỘT MỨC GIÁ CHUNG cho tất cả 15 chi nhánh. Do đó, giá thuê PT ở HVT Hoàng Văn Thụ, ĐBP Điện Biên Phủ, LHP Lê Hồng Phong, NCT Nguyễn Chí Thanh, NTT Nguyễn Thị Thập, UVK Ung Văn Khiêm, PĐL Phan Đăng Lưu, QT Quang Trung, AC Âu Cơ, NKKN Nam Kỳ Khởi Nghĩa, HG Hậu Giang, LTK Lý Thường Kiệt, BH Đồng Nai, ĐN Đà Nẵng, CT Cần Thơ đều hoàn toàn bằng nhau.
 
-## Gói PT Silver
+Giá thuê PT cụ thể như sau:
+Gói PT Silver: 399.000 VNĐ/tháng
+Gói PT Gold (8 buổi): 4.999.000 VNĐ
+Gói PT Platinum (24 buổi): 12.000.000 VNĐ
+Gói PT Diamond (72 buổi): 28.200.000 VNĐ
 
-Gói PT Silver tại The New Gym áp dụng cho tất cả các chi nhánh, dành cho khách hàng mới bắt đầu hoặc muốn trải nghiệm dịch vụ huấn luyện viên cá nhân với mức giá tiết kiệm.
-Tên gói: PT Silver.
-Giá gói PT Silver: 399.000 VNĐ.
-Gói PT Silver áp dụng tại tất cả chi nhánh The New Gym trên toàn hệ thống.
-Gói PT Silver phù hợp cho khách hàng muốn tập luyện có huấn luyện viên cá nhân hỗ trợ với chi phí thấp nhất.
+## Chi Tiết Gói PT Silver
+Gói PT Silver có giá 399.000 VNĐ, dành cho khách mới bắt đầu thuê PT hoặc muốn trải nghiệm tập luyện có PT với giá thấp nhất. Áp dụng toàn hệ thống.
 
-## Gói PT Gold
+## Chi Tiết Gói PT Gold
+Gói PT Gold có giá thuê là 4.999.000 VNĐ, bao gồm 8 buổi tập với PT, dành cho khách phân bổ lộ trình ngắn hạn. Áp dụng toàn hệ thống.
 
-Gói PT Gold tại The New Gym áp dụng cho tất cả các chi nhánh, dành cho khách hàng muốn tập luyện chuyên sâu với huấn luyện viên cá nhân chất lượng cao.
-Tên gói: PT Gold.
-Giá gói PT Gold: 4.999.000 VNĐ.
-Gói PT Gold bao gồm 8 buổi tập cùng huấn luyện viên cá nhân.
-Gói PT Gold áp dụng tại tất cả chi nhánh The New Gym trên toàn hệ thống.
-Gói PT Gold phù hợp cho khách hàng muốn có lộ trình tập luyện bài bản và được huấn luyện viên theo dõi sát sao.
+## Chi Tiết Gói PT Platinum
+Gói PT Platinum có giá thuê là 12.000.000 VNĐ, bao gồm 24 buổi tập với PT, dành cho mục tiêu trung và dài hạn. Áp dụng toàn hệ thống.
 
-## Gói PT Platinum
-
-Gói PT Platinum tại The New Gym áp dụng cho tất cả các chi nhánh, dành cho khách hàng muốn tập luyện toàn diện với huấn luyện viên cá nhân cao cấp và nhiều buổi tập hơn.
-Tên gói: PT Platinum.
-Giá gói PT Platinum: 12.000.000 VNĐ.
-Gói PT Platinum bao gồm 24 buổi tập cùng huấn luyện viên cá nhân.
-Gói PT Platinum áp dụng tại tất cả chi nhánh The New Gym trên toàn hệ thống.
-Gói PT Platinum phù hợp cho khách hàng nghiêm túc với mục tiêu tập luyện dài hạn, cần huấn luyện viên đồng hành nhiều buổi.
-
-## Gói PT Diamond
-
-Gói PT Diamond tại The New Gym áp dụng cho tất cả các chi nhánh, là gói huấn luyện viên cá nhân cao cấp nhất dành cho khách hàng muốn trải nghiệm dịch vụ PT đỉnh cao và toàn diện nhất.
-Tên gói: PT Diamond.
-Giá gói PT Diamond: 28.200.000 VNĐ.
-Gói PT Diamond bao gồm 72 buổi tập cùng huấn luyện viên cá nhân.
-Gói PT Diamond áp dụng tại tất cả chi nhánh The New Gym trên toàn hệ thống.
-Gói PT Diamond phù hợp cho khách hàng yêu cầu cao nhất về chất lượng huấn luyện và số lượng buổi tập.
+## Chi Tiết Gói PT Diamond
+Gói PT Diamond có giá thuê là 28.200.000 VNĐ, bao gồm 72 buổi tập với PT, là gói cao cấp nhất. Áp dụng toàn hệ thống.
