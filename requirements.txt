@@ -1,0 +1,25 @@
+# Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+
+# Vector Database
+chromadb==0.6.3
+
+# Embeddings
+sentence-transformers==3.3.1
+
+# Text Splitting
+langchain-text-splitters==0.3.4
+
+# Configuration
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+
+# HTTP Client (for Ollama API)
+httpx==0.28.1
+
+# Document Processing
+python-multipart==0.0.20
+
+# Frontend UI
+streamlit==1.32.2
