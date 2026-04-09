@@ -3,6 +3,7 @@
 -   Địa chỉ: 128 Đường Nguyễn Thị Thập, Bình Thuận, Quận 7, Thành phố Hồ Chí Minh
 -   Quận: 7
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/nguyen-thi-thap
 
 ## Club 2
@@ -10,6 +11,7 @@
 -   Địa chỉ: 197C Lê Hồng Phong, Phường 4, Quận 5, Thành phố Hồ Chí Minh
 -   Quận: 5
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/le-hong-phong
 
 ## Club 3
@@ -17,6 +19,7 @@
 -   Địa chỉ: 256 Điện Biên Phủ, Phường 3, Quận 10, Thành phố Hồ Chí Minh
 -   Quận: 10
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/dien-bien-phu
 
 ## Club 4
@@ -24,6 +27,7 @@
 -   Địa chỉ: Nam Kỳ Khởi Nghĩa, Phường Võ Thị Sáu, Quận 3, Thành phố Hồ Chí Minh
 -   Quận: 3
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/nam-ky-khoi-nghia
 
 ## Club 5
@@ -31,6 +35,7 @@
 -   Địa chỉ: 332 Nguyễn Chí Thanh, Phường 5, Quận 10, Thành phố Hồ Chí Minh
 -   Quận: 10
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/nguyen-chi-thanh
 
 ## Club 6
@@ -38,6 +43,7 @@
 -   Địa chỉ: 58D Đ. Ung Văn Khiêm, Phường 25, Bình Thạnh, Thành phố Hồ Chí Minh
 -   Quận: Bình Thạnh
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/ung-van-khiem
 
 ## Club 7
@@ -45,6 +51,7 @@
 -   Địa chỉ: 181 Phan Đăng Lưu, Phường 1, Phú Nhuận, Thành phố Hồ Chí Minh
 -   Quận: Phú Nhuận
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/phan-dang-luu
 
 ## Club 8
@@ -52,6 +59,7 @@
 -   Địa chỉ: 299/7 Đ. Lý Thường Kiệt, Phường 15, Quận 11, Thành phố Hồ Chí Minh
 -   Quận: 11
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/ly-thuong-kiet
 
 ## Club 9
@@ -59,6 +67,7 @@
 -   Địa chỉ: 307 - 309 Đ. Âu Cơ, Phường, Tân Phú, Thành phố Hồ Chí Minh
 -   Quận: Tân Phú
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/au-co
 
 ## Club 10
@@ -66,6 +75,7 @@
 -   Địa chỉ: 1/1 Hoàng Việt, Phường, Tân Bình, Thành phố Hồ Chí Minh
 -   Quận: Tân Bình
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/hoang-van-thu
 
 ## Club 11
@@ -73,6 +83,7 @@
 -   Địa chỉ: 1068 Đ. Hậu Giang, Phường Phú Lâm, Quận 6, Thành phố Hồ Chí Minh
 -   Quận: 6
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/hau-giang
 
 ## Club 12
@@ -80,6 +91,7 @@
 -   Địa chỉ: 185 - 189 Đ. Quang Trung, Phường 10, Gò Vấp, Thành phố Hồ Chí Minh
 -   Quận: Gò Vấp
 -   Tỉnh (Thành phố): Hồ Chí Minh
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/quang-trung
 
 ## Club 13
@@ -87,6 +99,7 @@
 -   Địa chỉ: 316 Nguyễn Ái Quốc, Hố Nai, Biên Hòa, Đồng Nai
 -   Quận:
 -   Tỉnh (Thành phố): Đồng Nai
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/bien-hoa
 
 ## Club 14
@@ -94,6 +107,7 @@
 -   Địa chỉ: 35 Đ. 3 Tháng 2, Thới Bình, Ninh Kiều, Cần Thơ
 -   Quận:
 -   Tỉnh (Thành phố): Cần Thơ
+-   Giờ mở cửa: 05:00 sáng đến 24:00 đêm
 -   Link: thenewgym.vn/gym/can-tho
 
 ## Club 15
@@ -101,4 +115,5 @@
 -   Địa chỉ: 115 Hoàng Diệu, Phường, Hải Châu, Đà Nẵng
 -   Quận:
 -   Tỉnh (Thành phố): Đà Nẵng
+-   Giờ mở cửa: 24/7
 -   Link: thenewgym.vn/gym/da-nang
