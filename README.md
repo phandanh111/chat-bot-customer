@@ -1,245 +1,204 @@
-# 🤖 RAG Customer Support Chatbot
+# The New Gym — RAG Customer Support Chatbot
 
-Chatbot chăm sóc khách hàng thông minh sử dụng **Retrieval Augmented Generation (RAG)**, tự động trả lời câu hỏi dựa trên tài liệu nội bộ của doanh nghiệp.
+Chatbot hỗ trợ khách hàng tự động cho hệ thống phòng tập **The New Gym**, sử dụng kiến trúc **Retrieval-Augmented Generation (RAG)** kết hợp với tích hợp **Map API** để gợi ý chi nhánh gần nhất theo vị trí thực tế của khách hàng.
 
-## ✨ Tính năng
+---
 
-- 💬 **Chat thông minh** — Trả lời câu hỏi bằng tiếng Việt dựa trên tài liệu đã nạp
-- 📚 **Nạp tài liệu linh hoạt** — Hỗ trợ `.txt`, `.md`, `.pdf`, `.docx`
-- 🔍 **Tìm kiếm ngữ nghĩa** — Sử dụng Vietnamese Embedding để tìm nội dung liên quan nhất
-- 🧠 **Chunking thông minh** — Tự động chọn chiến lược chia nhỏ phù hợp theo loại file
-- 📊 **Nguồn tham khảo** — Hiển thị nguồn dữ liệu mà chatbot sử dụng để trả lời
-- 🖥️ **Giao diện Streamlit** — Web UI trực quan, dễ sử dụng
-
-## 🏗️ Kiến trúc
+## Kiến trúc hệ thống
 
 ```
-┌─────────────┐     ┌──────────────┐     ┌──────────────────────────┐
-│  Streamlit  │────▶│   FastAPI    │────▶│       RAG Service        │
-│   Web UI    │◀────│   Backend    │◀────│   (Pipeline điều phối)   │
-│  (app.py)   │     │  (main.py)   │     └──────────┬───────────────┘
-└─────────────┘     └──────────────┘                │
-                                          ┌─────────┴─────────┐
-                                          ▼                   ▼
-                                   ┌──────────────┐   ┌──────────────┐
-                                   │  Embedding   │   │  LLM Service │
-                                   │   Service    │   │   (Ollama)   │
-                                   │  vietnamese- │   │  ministral-  │
-                                   │  embedding   │   │    3:8b      │
-                                   └──────┬───────┘   └──────────────┘
-                                          │
-                                          ▼
-                                   ┌──────────────┐
-                                   │   ChromaDB   │
-                                   │ Vector Store │
-                                   └──────────────┘
+Khách hàng (Streamlit UI)
+        │
+        ▼
+  FastAPI Backend  ──────────────────────────────────────────────────┐
+        │                                                            │
+        ├── RAGService.query()                                       │
+        │       │                                                    │
+        │       ├─ [1] Normalize query (acronym fix: hvt→HVT...)     │
+        │       ├─ [2] Embed query → EmbeddingService                │
+        │       │         (dangvantuan/vietnamese-embedding)         │
+        │       ├─ [3] Search ChromaDB → VectorStoreService          │
+        │       ├─ [4] Detect location intent → MapService           │
+        │       │         → Nominatim (OpenStreetMap API)            │
+        │       │         → Haversine distance → top-3 branches      │
+        │       ├─ [5] Inject Map context vào RAG context            │
+        │       └─ [6] Generate answer → LLMService                  │
+        │                 (Ollama - ministral-3:8b)                  │
+        └────────────────────────────────────────────────────────────┘
 ```
 
-## 🔄 Luồng hoạt động
+---
 
-### Nạp tài liệu (Ingestion)
+## Tính năng chính
 
-```
-Tài liệu (.md, .txt, .pdf, .docx)
-    │
-    ▼
-Chọn chiến lược Chunking
-    ├── File .md → MarkdownChunkingService (chia theo heading ##, ###)
-    │                 └── Enrichment: chuyển bullet-list → câu tự nhiên
-    └── File khác → ChunkingService (RecursiveCharacterTextSplitter)
-    │
-    ▼
-Tạo Embedding (vietnamese-embedding, 768 chiều)
-    │
-    ▼
-Lưu vào ChromaDB (cosine similarity)
-```
+- **Hỏi đáp tự động** dựa trên tài liệu nội bộ (chính sách giá, điều khoản, bảo mật, chi nhánh)
+- **Phân biệt Gói Tập vs Gói PT** — chunking tối ưu để tránh nhầm lẫn giữa 2 loại giá
+- **Gợi ý chi nhánh gần nhất** theo vị trí khách hàng nhập vào (tích hợp OpenStreetMap Nominatim)
+- **Chuẩn hóa từ viết tắt** tự động (`hvt → HVT`, `pt → PT`, `uvk → UVK`...) để cải thiện độ chính xác embedding
+- **Hai luồng chunking** — Markdown Header Splitter cho file `.md`, Recursive Text Splitter cho các định dạng còn lại
+- **Chat UI** đơn giản bằng Streamlit, kết nối realtime với FastAPI backend
 
-### Trả lời câu hỏi (Query)
+---
 
-```
-Câu hỏi của khách hàng
-    │
-    ▼
-Tạo Embedding cho câu hỏi
-    │
-    ▼
-Tìm kiếm Top-K chunks tương đồng nhất trong ChromaDB
-    │
-    ▼
-Ghép context (chunks) + câu hỏi → Gửi cho LLM
-    │
-    ▼
-LLM sinh câu trả lời bằng tiếng Việt
-    │
-    ▼
-Trả về: Câu trả lời + Nguồn tham khảo
-```
-
-## 📁 Cấu trúc dự án
+## Cấu trúc thư mục
 
 ```
 chat-bot-customer/
-├── app.py                              # Streamlit Web UI
-├── main.py                             # FastAPI Backend (entry point)
-├── ingest.py                           # CLI nạp tài liệu
-├── requirements.txt                    # Dependencies
-├── .env / .env.example                 # Cấu hình môi trường
-│
 ├── app/
-│   ├── config.py                       # Quản lý cấu hình (pydantic-settings)
-│   ├── models/
-│   │   └── schemas.py                  # Pydantic models (request/response)
-│   ├── services/
-│   │   ├── rag_service.py              # Điều phối pipeline RAG
-│   │   ├── chunking_service.py         # Chunking cho text thường
-│   │   ├── markdown_chunking_service.py # Chunking cho markdown + enrichment
-│   │   ├── embedding_service.py        # Tạo embedding vectors
-│   │   ├── vector_store.py             # ChromaDB operations
-│   │   └── llm_service.py             # Giao tiếp với Ollama LLM
 │   ├── api/
-│   │   └── routes.py                   # API endpoints (FastAPI)
-│   └── utils/
-│       └── document_loader.py          # Đọc file (.txt, .md, .pdf, .docx)
-│
-└── data/
-    ├── documents/                      # Thư mục chứa tài liệu gốc
-    └── chroma_db/                      # ChromaDB persistent storage
+│   │   └── routes.py               # FastAPI endpoints
+│   ├── models/
+│   │   └── schemas.py              # Pydantic schemas
+│   ├── services/
+│   │   ├── rag_service.py          # Orchestrator chính (RAG pipeline)
+│   │   ├── llm_service.py          # Gọi Ollama API để sinh câu trả lời
+│   │   ├── embedding_service.py    # Mã hóa văn bản thành vector
+│   │   ├── vector_store.py         # Quản lý ChromaDB
+│   │   ├── chunking_service.py     # Text splitter thông thường
+│   │   ├── markdown_chunking_service.py  # Markdown header splitter + enrichment
+│   │   └── map_service.py          # Geocoding + tính khoảng cách chi nhánh
+│   ├── utils/
+│   │   ├── document_loader.py      # Đọc file (txt, md, pdf, docx)
+│   │   └── geo_utils.py            # Tọa độ 15 chi nhánh + Haversine formula
+│   ├── config.py                   # Cấu hình từ .env (pydantic-settings)
+│   └── constants.py                # Toàn bộ hằng số dự án
+├── data/
+│   ├── documents/                  # Tài liệu nguồn để ingest
+│   │   ├── bang_gia_goi_tap.md
+│   │   ├── bang_gia_pt.md
+│   │   ├── clubs_summary.md
+│   │   ├── chinh_sach_bao_mat.md
+│   │   └── dieu_khoan_dieu_kien.md
+│   └── chroma_db/                  # Vector database (tự sinh, không commit)
+├── app.py                          # Streamlit UI
+├── main.py                         # FastAPI entry point
+├── ingest.py                       # CLI script nạp tài liệu
+├── test_cases.md                   # Bộ câu hỏi kiểm thử RAG
+├── .env                            # Cấu hình cục bộ (không commit)
+├── .env.example                    # Mẫu cấu hình
+└── requirements.txt
 ```
 
-## 🛠️ Tech Stack
+---
 
-| Thành phần | Công nghệ | Chi tiết |
-|------------|-----------|----------|
-| **LLM** | Ollama + Ministral 3:8B | Model ngôn ngữ chạy local |
-| **Embedding** | `dangvantuan/vietnamese-embedding` | Vector 768 chiều, tối ưu cho tiếng Việt |
-| **Vector DB** | ChromaDB | Lưu trữ persistent, cosine similarity |
-| **Backend** | FastAPI | REST API, async, auto-docs |
-| **Frontend** | Streamlit | Giao diện chat trực quan |
-| **Chunking** | LangChain Text Splitters | Recursive + Markdown Header |
-
-## 🚀 Cài đặt & Chạy
+## Cài đặt
 
 ### Yêu cầu
 
-- Python 3.12+
-- [Ollama](https://ollama.com/download) đã cài đặt
+- Python 3.11+
+- [Ollama](https://ollama.com) đã cài và đang chạy
+- Model LLM: `ollama pull ministral-3:8b`
 
-### Bước 1: Clone & Cài dependencies
+### Các bước
 
 ```bash
-git clone <repo-url>
-cd chat-bot-customer
-
+# 1. Tạo môi trường ảo
 python -m venv venv
-source venv/bin/activate  # macOS/Linux
+source venv/bin/activate
 
+# 2. Cài thư viện
 pip install -r requirements.txt
-```
 
-### Bước 2: Cấu hình
-
-```bash
+# 3. Tạo file cấu hình
 cp .env.example .env
-# Chỉnh sửa .env nếu cần
-```
 
-### Bước 3: Cài model LLM
+# 4. Nạp tài liệu vào vector store
+python ingest.py --clear
 
-```bash
-ollama pull ministral-3:8b
-ollama serve  # Nếu Ollama chưa chạy
-```
-
-### Bước 4: Nạp tài liệu
-
-Đặt file tài liệu vào `data/documents/`, sau đó:
-
-```bash
-python ingest.py               # Nạp toàn bộ thư mục
-python ingest.py --clear       # Xóa data cũ + nạp lại
-python ingest.py --file <path> # Nạp 1 file cụ thể
-```
-
-### Bước 5: Chạy ứng dụng
-
-**Terminal 1 — Backend:**
-```bash
-source venv/bin/activate
+# 5. Khởi động backend
 python main.py
-# → API chạy tại http://localhost:8000
-# → Swagger UI tại http://localhost:8000/docs
-```
 
-**Terminal 2 — Web UI:**
-```bash
-source venv/bin/activate
+# 6. Khởi động UI (terminal riêng)
 streamlit run app.py
-# → Giao diện chat tại http://localhost:8501
 ```
 
-## 📡 API Endpoints
+---
 
-| Method | Endpoint | Mô tả |
-|--------|----------|--------|
-| `POST` | `/api/chat` | Gửi câu hỏi, nhận câu trả lời + nguồn |
-| `POST` | `/api/ingest/directory` | Nạp toàn bộ `data/documents/` |
-| `POST` | `/api/ingest/upload` | Upload & nạp 1 file |
-| `GET` | `/api/collection/info` | Thông tin vector store |
-| `DELETE` | `/api/collection/clear` | Xóa toàn bộ dữ liệu |
-| `GET` | `/api/health` | Health check |
-
-## 🧩 Chiến lược Chunking
-
-Dự án sử dụng **2 chiến lược chunking**, tự động chọn theo loại file:
-
-### 1. Recursive Text Splitting (cho `.txt`, `.pdf`, `.docx`)
-- Chia theo paragraph → sentence → word
-- `chunk_size`: 500 ký tự, `overlap`: 50
-- Tối ưu cho văn bản dạng tự do
-
-### 2. Markdown Header Splitting + Enrichment (cho `.md`)
-- Chia theo heading `##`, `###` — mỗi section = 1 chunk
-- **Chunk Enrichment**: Chuyển dữ liệu dạng bullet-list (`- Key: Value`) thành **câu tiếng Việt tự nhiên** trước khi tạo embedding → cải thiện retrieval accuracy
-- Tối ưu cho dữ liệu có cấu trúc (danh sách chi nhánh, bảng giá, FAQ...)
-
-**Ví dụ Enrichment:**
-```
-Trước: "- Quận: Gò Vấp"
-Sau:   "Chi nhánh The New Gym Quang Trung, tại quận Gò Vấp, thuộc Hồ Chí Minh."
-```
-
-## 📂 Tài liệu hiện có
-
-| File | Nội dung | Chunks |
-|------|----------|--------|
-| `clubs_summary.md` | Danh sách 15 chi nhánh The New Gym | 15 |
-| `dieu_khoan_dieu_kien.md` | Điều khoản & Điều kiện sử dụng | 45 |
-| `chinh_sach_bao_mat.md` | Chính sách bảo mật thông tin | 17 |
-| `bang_gia_t03_2026.md` | Bảng giá gói tập tháng 03/2026 | 16 |
-
-## ⚙️ Cấu hình
-
-Các biến môi trường trong `.env`:
+## Cấu hình `.env`
 
 | Biến | Mặc định | Mô tả |
-|------|----------|-------|
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL của Ollama server |
-| `LLM_MODEL` | `ministral-3:8b` | Model LLM sử dụng |
-| `EMBED_MODEL` | `dangvantuan/vietnamese-embedding` | Model embedding |
+|---|---|---|
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | URL Ollama server |
+| `LLM_MODEL` | `ministral-3:8b` | Tên model LLM |
+| `EMBED_MODEL` | `dangvantuan/vietnamese-embedding` | Model embedding tiếng Việt |
 | `EXERCISE_EMBED_LIMIT` | `500` | Kích thước tối đa mỗi chunk (ký tự) |
-| `EXERCISE_CONTEXT_LIMIT` | `6` | Số chunks trả về khi tìm kiếm |
+| `EXERCISE_CONTEXT_LIMIT` | `4` | Số chunk tối đa đưa vào context |
 | `CHROMA_DB_PATH` | `data/chroma_db` | Đường dẫn lưu ChromaDB |
-| `COLLECTION_NAME` | `customer_support_docs` | Tên collection trong ChromaDB |
+| `COLLECTION_NAME` | `customer_support_docs` | Tên collection ChromaDB |
 
-## 📝 Cập nhật dữ liệu
+---
 
-Khi cần cập nhật tài liệu (ví dụ: thay đổi giá, thêm chi nhánh mới):
+## Quản lý tài liệu
 
-1. Sửa/thêm file `.md` trong `data/documents/`
-2. Chạy `python ingest.py --clear` để nạp lại
-3. Restart backend `python main.py`
+### Nạp tài liệu mới
 
-## 📄 License
+```bash
+# Nạp toàn bộ thư mục data/documents/
+python ingest.py
 
-MIT License
+# Nạp 1 file cụ thể
+python ingest.py --file data/documents/bang_gia_goi_tap.md
+
+# Xóa sạch rồi nạp lại
+python ingest.py --clear
+```
+
+### Cập nhật bảng giá
+
+Chỉnh sửa trực tiếp các file `.md` trong `data/documents/`, sau đó chạy lại:
+
+```bash
+python ingest.py --clear
+```
+
+**Lưu ý định dạng:** Viết giá theo dạng paragraph liền mạch, tránh dùng bullet list (`-`) để ngăn chunker tách giá khỏi tên chi nhánh.
+
+### Thêm chi nhánh mới
+
+Chỉnh sửa **duy nhất** file `app/utils/geo_utils.py` — thêm tọa độ vào `BRANCHES_COORDINATES`. Danh sách chi nhánh trong System Prompt và thuật toán tìm chi nhánh gần nhất sẽ tự động cập nhật.
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Mô tả |
+|---|---|---|
+| `POST` | `/api/chat` | Gửi câu hỏi, nhận câu trả lời |
+| `POST` | `/api/ingest/directory` | Nạp toàn bộ `data/documents/` |
+| `POST` | `/api/ingest/upload` | Upload và nạp 1 file |
+| `GET` | `/api/collection/info` | Thông tin vector store |
+| `DELETE` | `/api/collection/clear` | Xóa toàn bộ vector store |
+| `GET` | `/api/health` | Kiểm tra trạng thái API |
+
+### Ví dụ gọi API
+
+```bash
+curl -X POST http://localhost:8000/api/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question": "Gói PT Silver bao nhiêu tiền?", "history": []}'
+```
+
+---
+
+## Tính năng Map (Gợi ý chi nhánh gần nhất)
+
+Khi khách nhắc đến tên quận/huyện hoặc khu vực (ví dụ: *"tôi ở Thủ Đức"*, *"gần Quận 7"*):
+
+1. Hệ thống nhận diện địa điểm qua regex pattern matching
+2. Gọi **OpenStreetMap Nominatim API** (miễn phí, không cần API key) để lấy tọa độ
+3. Tính khoảng cách đến 15 chi nhánh bằng **công thức Haversine**
+4. Tiêm thông tin khoảng cách vào context trước khi đưa vào LLM
+
+> Tọa độ 15 chi nhánh được lưu tĩnh trong `geo_utils.py` nên không mất thời gian geocode khi startup.
+
+---
+
+## Tài liệu nguồn
+
+| File | Nội dung |
+|---|---|
+| `bang_gia_goi_tap.md` | Bảng giá thẻ hội viên (gói tập tự tập) theo từng nhóm chi nhánh |
+| `bang_gia_pt.md` | Bảng giá gói thuê PT (Personal Trainer) |
+| `clubs_summary.md` | Danh sách 15 chi nhánh với địa chỉ và thông tin cụ thể |
+| `chinh_sach_bao_mat.md` | Chính sách bảo mật dữ liệu thành viên |
+| `dieu_khoan_dieu_kien.md` | Điều khoản và điều kiện sử dụng dịch vụ |
