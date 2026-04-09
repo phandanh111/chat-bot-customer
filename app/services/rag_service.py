@@ -143,34 +143,15 @@ class RAGService:
     # ──────────────────────────────────────────
 
     @staticmethod
-    def _build_retrieval_query(
-        question: str,
-        history: list[dict[str, str]] | None,
-    ) -> str:
+    def _build_retrieval_query(question: str, history: list[dict[str, str]]) -> str:
         """
-        Combine recent user utterances with the current question for embedding,
-        so short follow-ups still retrieve the right branch/topic.
+        Build a query string optimized for embedding and retrieval.
+        We only embed the current question, because concatenating unrelated 
+        previous turns pollutes the semantic meaning of the target query.
         """
-        question = question.strip()
-        if not history:
-            return question
-
-        user_msgs = [
-            (m.get("content") or "").strip()
-            for m in history
-            if m.get("role") == "user" and (m.get("content") or "").strip()
-        ]
-        tail_users = user_msgs[-2:]
-        combined = "\n".join(tail_users + [question])
-
-        if len(combined) <= _RETRIEVAL_QUERY_MAX_CHARS:
-            return combined
-
-        last_prior = tail_users[-1] if tail_users else ""
-        merged = f"{last_prior}\n{question}".strip()
-        if len(merged) <= _RETRIEVAL_QUERY_MAX_CHARS:
-            return merged
-        return merged[:_RETRIEVAL_QUERY_MAX_CHARS]
+        if len(question) <= _RETRIEVAL_QUERY_MAX_CHARS:
+            return question.strip()
+        return question.strip()[:_RETRIEVAL_QUERY_MAX_CHARS]
 
     def _normalize_query(self, query: str) -> str:
         """
