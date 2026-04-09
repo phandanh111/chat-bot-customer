@@ -64,3 +64,16 @@ Dưới đây là danh sách các câu hỏi từ Dễ đến Khó được thi�
 💡 **Mẹo:**
 - Để ý phần Nguồn Tham Khảo (Sources) bên dưới câu trả lời của Bot. Nếu Bot trả lời đúng nhưng trích dẫn nhầm nguồn (dù hiếm) thì cần điều chỉnh lại chunking. 
 - Giới hạn Context đang được set là 6 chunks để tránh Model bị "ngợp" thông tin.
+
+
+🎯 Giai đoạn 1: Tìm hiểu ban đầu (Hỏi ngắn, gõ vội)
+"phí tập ở đây bao nhiêu vậy" "có mấy chi nhánh ở sài gòn?" "nhà tôi ở gò vấp thì vô chỗ nào gần nhất" "gym mở cửa mấy giờ?"
+
+💳 Giai đoạn 2: So sánh & Ra quyết định
+"gói 1 tháng với gói 3 tháng khác nhau như thế nào, mua cái nào lời hơn?" "có cần đặt cọc hay ký hợp đồng gì không?" "thanh toán được bằng momo không hay chỉ tiền mặt?" "đăng ký xong tập được luôn không hay phải chờ?" "lần đầu đến cần mang theo gì?"
+
+🤔 Giai đoạn 3: Lo lắng / Trường hợp cá nhân
+"tôi hay đi công tác thì có thể tập ở nhiều chi nhánh khác nhau không?" "lỡ mua rồi không đi được thì có hoàn tiền không?" "có huấn luyện viên hướng dẫn không hay phải tự tập?" "muốn tập với PT thì đăng ký như thế nào, giá bao nhiêu?" "cho người chưa tập gym bao giờ thì có phù hợp không?"
+
+😤 Giai đoạn 4: Khiếu nại / Tình huống phát sinh (Quan trọng nhất!)
+"tôi quên đồ ở tủ locker thì làm sao lấy lại?" "thẻ thanh toán tự động bị lỗi không trừ được thì tài khoản có bị khóa không?" "tôi muốn hủy gói tập thì làm thế nào?" "tôi muốn chuyển nhượng thẻ cho bạn tôi thì được không?"
