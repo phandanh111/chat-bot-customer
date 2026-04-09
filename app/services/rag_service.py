@@ -18,6 +18,7 @@ from app.services.markdown_chunking_service import MarkdownChunkingService
 from app.services.embedding_service import EmbeddingService
 from app.services.llm_service import LLMService
 from app.services.vector_store import VectorStoreService
+from app.services.map_service import MapService
 from app.utils.document_loader import load_document
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ class RAGService:
         self._embedding = EmbeddingService()
         self._vector_store = VectorStoreService()
         self._llm = LLMService()
+        self._map_service = MapService()
         self._settings = get_settings()
 
     # ──────────────────────────────────────────
@@ -229,6 +231,27 @@ class RAGService:
                 )
 
         context = "\n\n".join(context_parts)
+
+        # 3.5 Check for Geo Intent and Inject Maps Context
+        import re
+        location_keywords = [
+            "thủ đức", "gò vấp", "bình thạnh", "phú nhuận", "tân bình", "tân phú", "bình tân",
+            "nhà bè", "bình chánh", "hóc môn", "củ chi", "biên hòa", "đà nẵng", "cần thơ"
+        ]
+        location_keywords.extend([f"quận {i}" for i in range(1, 13)])
+        location_keywords.extend([f"q{i}" for i in range(1, 13)])
+        location_keywords.extend(["quận một", "quận hai", "quận ba", "quận tư", "quận năm", "quận sáu"])
+        
+        found_locations = []
+        for loc in location_keywords:
+            if re.search(r'\b' + loc + r'\b', question.lower()):
+                found_locations.append(loc)
+        
+        if found_locations:
+            loc = found_locations[0]
+            map_injection = await self._map_service.get_closest_branches(loc)
+            if map_injection:
+                context = map_injection + "\n\n" + context
 
         # 4. Generate answer
         if not context.strip():
