@@ -1,4 +1,5 @@
 import re
+from pathlib import Path
 
 RETRIEVAL_QUERY_MAX_CHARS = 2000
 
@@ -49,3 +50,30 @@ NO_CONTEXT_REPLY = (
     "của bạn trong cơ sở dữ liệu. Vui lòng liên hệ bộ phận hỗ trợ "
     "để được giúp đỡ thêm."
 )
+
+DOCUMENTS_DIR = Path("data/documents")
+
+VECTOR_STORE_DISTANCE_METRIC = "cosine"
+
+CHAT_REQUEST_TIMEOUT = 60.0
+HEALTH_CHECK_TIMEOUT = 2.0
+COLLECTION_INFO_TIMEOUT = 5.0
+
+CHAT_HISTORY_MAX_LENGTH = 100
+CHAT_QUESTION_MAX_LENGTH = 2000
+CHAT_MESSAGE_CONTENT_MAX_LENGTH = 8000
+
+APP_NAME = "RAG Customer Support Chatbot"
+APP_VERSION = "1.0.0"
+APP_HOST = "0.0.0.0"
+APP_PORT = 8000
+
+STREAMLIT_API_URL = "http://localhost:8000"
+
+LOG_FORMAT = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
+LOG_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+MARKDOWN_KNOWN_FIELDS: frozenset[str] = frozenset({
+    "Tên club", "Tên", "Tên sản phẩm",
+    "Địa chỉ", "Quận", "Tỉnh (Thành phố)", "Tỉnh", "Link",
+})
