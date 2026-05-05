@@ -1,5 +1,6 @@
 import streamlit as st
 import httpx
+import json
 
 from app.constants import (
     CHAT_REQUEST_TIMEOUT,
@@ -33,15 +34,24 @@ if prompt := st.chat_input("Nhập câu hỏi của bạn..."):
         message_placeholder = st.empty()
         try:
             with st.spinner("Đang tìm câu trả lời..."):
-                response = httpx.post(
-                    f"{STREAMLIT_API_URL}/api/chat",
-                    json={"question": prompt, "history": chat_history},
-                    timeout=CHAT_REQUEST_TIMEOUT,
-                )
-                response.raise_for_status()
-                result = response.json()
-                answer = result.get("answer", "")
-                sources = result.get("sources", [])
+                answer = ""
+                sources = []
+                with httpx.Client(timeout=CHAT_REQUEST_TIMEOUT) as client:
+                    with client.stream(
+                        "POST",
+                        f"{STREAMLIT_API_URL}/api/chat/stream",
+                        json={"question": prompt, "history": chat_history},
+                    ) as response:
+                        response.raise_for_status()
+                        for line in response.iter_lines():
+                            if not line:
+                                continue
+                            event = json.loads(line)
+                            if event.get("type") == "token":
+                                answer += event.get("content", "")
+                                message_placeholder.markdown(answer + "▌")
+                            elif event.get("type") == "done":
+                                sources = event.get("sources", [])
                 message_placeholder.markdown(answer)
                 if sources:
                     with st.expander("Nguồn tham khảo"):

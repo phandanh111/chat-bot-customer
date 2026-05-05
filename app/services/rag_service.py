@@ -1,5 +1,6 @@
 import logging
 import re
+from collections.abc import AsyncIterator
 from pathlib import Path
 
 from app.config import get_settings
@@ -121,6 +122,28 @@ class RAGService:
         question: str,
         history: list[dict[str, str]] | None = None,
     ) -> ChatResponse:
+        context, sources = await self._build_context(question)
+        if not context.strip():
+            return ChatResponse(answer=NO_CONTEXT_REPLY, sources=sources)
+
+        answer = await self._llm.generate(question=question, context=context)
+        return ChatResponse(answer=answer, sources=sources)
+
+    async def stream_query(
+        self,
+        question: str,
+        history: list[dict[str, str]] | None = None,
+    ) -> tuple[AsyncIterator[str], list[SourceDocument]]:
+        context, sources = await self._build_context(question)
+        if not context.strip():
+            async def _fallback() -> AsyncIterator[str]:
+                yield NO_CONTEXT_REPLY
+
+            return _fallback(), sources
+
+        return self._llm.generate_stream(question=question, context=context), sources
+
+    async def _build_context(self, question: str) -> tuple[str, list[SourceDocument]]:
         normalized = self._normalize_query(question)
         retrieval_query = self._build_retrieval_query(normalized)
         query_embedding = self._embedding.embed_query(retrieval_query)
@@ -156,8 +179,4 @@ class RAGService:
             if map_injection:
                 context = map_injection + "\n\n" + context
 
-        if not context.strip():
-            return ChatResponse(answer=NO_CONTEXT_REPLY, sources=sources)
-
-        answer = await self._llm.generate(question=question, context=context)
-        return ChatResponse(answer=answer, sources=sources)
+        return context, sources

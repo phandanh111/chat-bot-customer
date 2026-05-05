@@ -1,7 +1,9 @@
 import logging
+import json
 from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi.responses import StreamingResponse
 
 from app.constants import DOCUMENTS_DIR, SUPPORTED_DOCUMENT_EXTENSIONS
 from app.models.schemas import (
@@ -35,6 +37,31 @@ async def chat(request: ChatRequest):
         )
     except Exception as exc:
         logger.error("Chat error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Đã có lỗi xảy ra khi xử lý câu hỏi.")
+
+
+@router.post("/chat/stream")
+async def chat_stream(request: ChatRequest):
+    try:
+        stream, sources = await _get_rag_service().stream_query(
+            question=request.question,
+            history=[m.model_dump() for m in request.history],
+        )
+
+        async def event_stream():
+            async for token in stream:
+                yield json.dumps({"type": "token", "content": token}, ensure_ascii=False) + "\n"
+            yield json.dumps(
+                {
+                    "type": "done",
+                    "sources": [source.model_dump() for source in sources],
+                },
+                ensure_ascii=False,
+            ) + "\n"
+
+        return StreamingResponse(event_stream(), media_type="application/x-ndjson")
+    except Exception as exc:
+        logger.error("Chat stream error: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail="Đã có lỗi xảy ra khi xử lý câu hỏi.")
 
 

@@ -1,4 +1,6 @@
 import logging
+import json
+from collections.abc import AsyncIterator
 
 import httpx
 
@@ -64,6 +66,52 @@ class LLMService:
         except httpx.ConnectError:
             logger.error("Cannot connect to Ollama at %s", self._base_url)
             return "Không thể kết nối đến máy chủ AI. Vui lòng kiểm tra Ollama đang chạy."
+
+    async def generate_stream(self, question: str, context: str) -> AsyncIterator[str]:
+        prompt = self._build_prompt(question, context)
+        payload = {
+            "model": self._model,
+            "prompt": prompt,
+            "system": SYSTEM_PROMPT,
+            "stream": True,
+            "options": {
+                "temperature": 0.3,
+                "top_p": 0.9,
+                "num_predict": 1024,
+            },
+        }
+        try:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                async with client.stream(
+                    "POST",
+                    f"{self._base_url}/api/generate",
+                    json=payload,
+                ) as response:
+                    response.raise_for_status()
+                    async for line in response.aiter_lines():
+                        if not line:
+                            continue
+                        try:
+                            chunk = json.loads(line)
+                        except json.JSONDecodeError:
+                            continue
+                        token = chunk.get("response", "")
+                        if token:
+                            yield token
+                        if chunk.get("done"):
+                            return
+
+        except httpx.TimeoutException:
+            logger.error("Ollama stream timed out after %.1fs", self._timeout)
+            yield "Xin lỗi, hệ thống đang phản hồi chậm. Vui lòng thử lại sau."
+
+        except httpx.HTTPStatusError as exc:
+            logger.error("Ollama stream HTTP error: %s", exc.response.status_code)
+            yield "Xin lỗi, đã có lỗi xảy ra khi xử lý yêu cầu của bạn."
+
+        except httpx.ConnectError:
+            logger.error("Cannot connect to Ollama at %s", self._base_url)
+            yield "Không thể kết nối đến máy chủ AI. Vui lòng kiểm tra Ollama đang chạy."
 
     async def health_check(self) -> bool:
         try:
