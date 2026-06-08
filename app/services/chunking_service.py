@@ -5,11 +5,10 @@ from typing import Optional
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.config import get_settings
+from app.constants import CHUNK_SEPARATORS
 from app.models.schemas import DocumentChunk
 
 logger = logging.getLogger(__name__)
-
-SEPARATORS = ["\n\n", "\n", ". ", "! ", "? ", "; ", ", ", " ", ""]
 
 
 class ChunkingService:
@@ -18,7 +17,7 @@ class ChunkingService:
         self._splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.EXERCISE_EMBED_LIMIT,
             chunk_overlap=settings.CHUNK_OVERLAP,
-            separators=SEPARATORS,
+            separators=CHUNK_SEPARATORS,
             length_function=len,
             is_separator_regex=False,
         )

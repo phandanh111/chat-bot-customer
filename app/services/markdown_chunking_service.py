@@ -9,13 +9,11 @@ from langchain_text_splitters import (
 )
 
 from app.config import get_settings
-from app.constants import MARKDOWN_KNOWN_FIELDS
+from app.constants import CHUNK_SEPARATORS, MARKDOWN_HEADERS_TO_SPLIT, MARKDOWN_KNOWN_FIELDS
 from app.models.schemas import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
-HEADERS_TO_SPLIT = [("#", "h1"), ("##", "h2"), ("###", "h3")]
-FALLBACK_SEPARATORS = ["\n\n", "\n", ". ", "! ", "? ", "; ", ", ", " ", ""]
 _BULLET_PATTERN = re.compile(r"^-\s+(.+?):\s*(.*)$")
 
 
@@ -23,12 +21,12 @@ class MarkdownChunkingService:
     def __init__(self) -> None:
         settings = get_settings()
         self._header_splitter = MarkdownHeaderTextSplitter(
-            headers_to_split_on=HEADERS_TO_SPLIT, strip_headers=False
+            headers_to_split_on=MARKDOWN_HEADERS_TO_SPLIT, strip_headers=False
         )
         self._fallback_splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.EXERCISE_EMBED_LIMIT,
             chunk_overlap=settings.CHUNK_OVERLAP,
-            separators=FALLBACK_SEPARATORS,
+            separators=CHUNK_SEPARATORS,
             length_function=len,
         )
         self._max_chunk_size = settings.EXERCISE_EMBED_LIMIT

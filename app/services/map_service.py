@@ -23,7 +23,6 @@ class MapService:
             logger.debug("Static coords hit for '%s'", location_text)
             return STATIC_LOCATION_COORDINATES[normalized]
 
-        # Fallback to Nominatim only for unknown locations
         params = {"q": f"{location_text}, Ho Chi Minh, Vietnam", "format": "json", "limit": 1}
         try:
             async with httpx.AsyncClient(timeout=MAP_GEOCODE_TIMEOUT) as client:

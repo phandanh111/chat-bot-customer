@@ -10,10 +10,15 @@ from cachetools import TTLCache
 from app.config import get_settings
 from app.constants import (
     ACRONYM_NORMALIZATIONS,
+    CONTEXT_CACHE_MAX_SIZE,
+    CONTEXT_CACHE_TTL_SECONDS,
+    LLM_HISTORY_WINDOW,
     LOCATION_KEYWORD_PATTERNS,
     MARKDOWN_EXTENSIONS,
     MIN_RELEVANCE_SCORE,
     NO_CONTEXT_REPLY,
+    RESPONSE_CACHE_MAX_SIZE,
+    RESPONSE_CACHE_TTL_SECONDS,
     RETRIEVAL_MAX_CHUNKS_PER_SOURCE,
     RETRIEVAL_QUERY_MAX_CHARS,
     SUPPORTED_DOCUMENT_EXTENSIONS,
@@ -40,8 +45,8 @@ _ACRONYM_PATTERNS: list[tuple[re.Pattern, str]] = [
     for k, v in ACRONYM_NORMALIZATIONS.items()
 ]
 
-
-_CONTEXT_CACHE: TTLCache = TTLCache(maxsize=256, ttl=3600)
+_CONTEXT_CACHE: TTLCache = TTLCache(maxsize=CONTEXT_CACHE_MAX_SIZE, ttl=CONTEXT_CACHE_TTL_SECONDS)
+_RESPONSE_CACHE: TTLCache = TTLCache(maxsize=RESPONSE_CACHE_MAX_SIZE, ttl=RESPONSE_CACHE_TTL_SECONDS)
 
 
 class RAGService:
@@ -54,6 +59,12 @@ class RAGService:
         self._map_service = MapService()
         self._query_rewriter = QueryRewriterService()
         self._settings = get_settings()
+
+    def get_collection_info(self) -> dict:
+        return self._vector_store.get_collection_info()
+
+    def clear_collection(self) -> None:
+        self._vector_store.clear_collection()
 
     def ingest_file(self, file_path: str | Path) -> int:
         file_path = Path(file_path)
@@ -109,6 +120,64 @@ class RAGService:
             files_processed=processed_files,
         )
 
+    async def query(
+        self,
+        question: str,
+        history: list[dict[str, str]] | None = None,
+    ) -> ChatResponse:
+        context, sources = await self._build_context(question, history)
+        if not context.strip():
+            return ChatResponse(answer=NO_CONTEXT_REPLY, sources=sources)
+
+        resp_key = self._response_cache_key(question, context, history)
+        if resp_key in _RESPONSE_CACHE:
+            logger.debug("Response cache hit: %s...", question[:50])
+            return ChatResponse(answer=_RESPONSE_CACHE[resp_key], sources=sources)
+
+        answer = await self._llm.generate(question=question, context=context, history=history)
+        _RESPONSE_CACHE[resp_key] = answer
+        return ChatResponse(answer=answer, sources=sources)
+
+    async def stream_query(
+        self,
+        question: str,
+        history: list[dict[str, str]] | None = None,
+    ) -> tuple[AsyncIterator[str], list[SourceDocument]]:
+        context, sources = await self._build_context(question, history)
+        if not context.strip():
+            async def _fallback() -> AsyncIterator[str]:
+                yield NO_CONTEXT_REPLY
+
+            return _fallback(), sources
+
+        resp_key = self._response_cache_key(question, context, history)
+        if resp_key in _RESPONSE_CACHE:
+            logger.debug("Response cache hit (stream): %s...", question[:50])
+            cached = _RESPONSE_CACHE[resp_key]
+
+            async def _from_cache() -> AsyncIterator[str]:
+                yield cached
+
+            return _from_cache(), sources
+
+        async def _generate_and_cache() -> AsyncIterator[str]:
+            tokens: list[str] = []
+            async for token in self._llm.generate_stream(question=question, context=context, history=history):
+                tokens.append(token)
+                yield token
+            _RESPONSE_CACHE[resp_key] = "".join(tokens)
+
+        return _generate_and_cache(), sources
+
+    @staticmethod
+    def _response_cache_key(question: str, context: str, history: list[dict] | None) -> str:
+        history_repr = str([
+            f"{m['role']}:{m['content'][:100]}"
+            for m in (history or [])[-LLM_HISTORY_WINDOW:]
+        ])
+        raw = f"{question}|{context[:500]}|{history_repr}"
+        return hashlib.md5(raw.encode()).hexdigest()
+
     @staticmethod
     def _normalize_query(query: str) -> str:
         for pattern, replacement in _ACRONYM_PATTERNS:
@@ -128,35 +197,15 @@ class RAGService:
                 return m.group(0)
         return None
 
-    async def query(
-        self,
-        question: str,
-        history: list[dict[str, str]] | None = None,
-    ) -> ChatResponse:
-        context, sources = await self._build_context(question, history)
-        if not context.strip():
-            return ChatResponse(answer=NO_CONTEXT_REPLY, sources=sources)
-
-        answer = await self._llm.generate(question=question, context=context, history=history)
-        return ChatResponse(answer=answer, sources=sources)
-
-    async def stream_query(
-        self,
-        question: str,
-        history: list[dict[str, str]] | None = None,
-    ) -> tuple[AsyncIterator[str], list[SourceDocument]]:
-        context, sources = await self._build_context(question, history)
-        if not context.strip():
-            async def _fallback() -> AsyncIterator[str]:
-                yield NO_CONTEXT_REPLY
-
-            return _fallback(), sources
-
-        return self._llm.generate_stream(question=question, context=context, history=history), sources
-
     async def _build_context(self, question: str, history: list[dict[str, str]] | None = None) -> tuple[str, list[SourceDocument]]:
         normalized = self._normalize_query(question)
         retrieval_query = self._build_retrieval_query(normalized)
+
+        location = self._detect_location(question)
+        map_task = asyncio.ensure_future(
+            self._map_service.get_closest_branches(location)
+        ) if location else None
+
         retrieval_query = await self._query_rewriter.rewrite(retrieval_query, history=history)
 
         cache_key = hashlib.md5(retrieval_query.encode()).hexdigest()
@@ -164,7 +213,7 @@ class RAGService:
             logger.debug("Context cache hit for query: %s...", retrieval_query[:60])
             cached_context, cached_sources = _CONTEXT_CACHE[cache_key]
         else:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             query_embedding = await loop.run_in_executor(None, self._embedding.embed_query, retrieval_query)
 
             results = await loop.run_in_executor(
@@ -192,7 +241,6 @@ class RAGService:
                     candidate_metas.append(meta)
                     candidate_scores.append(score)
 
-            # Rank by cosine score (descending), enforce per-source diversity
             sorted_indices = sorted(
                 range(len(candidate_scores)),
                 key=lambda i: candidate_scores[i],
@@ -227,9 +275,8 @@ class RAGService:
         context = cached_context
         sources = list(cached_sources)
 
-        location = self._detect_location(question)
-        if location:
-            map_injection = await self._map_service.get_closest_branches(location)
+        if map_task:
+            map_injection = await map_task
             if map_injection:
                 context = map_injection + "\n\n" + context
 

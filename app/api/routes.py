@@ -104,7 +104,7 @@ async def ingest_upload(file: UploadFile = File(...)):
 @router.get("/collection/info", response_model=CollectionInfoResponse)
 async def get_collection_info():
     try:
-        return CollectionInfoResponse(**_get_rag_service()._vector_store.get_collection_info())
+        return CollectionInfoResponse(**_get_rag_service().get_collection_info())
     except Exception as exc:
         logger.error("Collection info error: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail="Lỗi khi lấy thông tin collection.")
@@ -113,7 +113,7 @@ async def get_collection_info():
 @router.delete("/collection/clear")
 async def clear_collection():
     try:
-        _get_rag_service()._vector_store.clear_collection()
+        _get_rag_service().clear_collection()
         return {"message": "Đã xóa toàn bộ dữ liệu trong collection."}
     except Exception as exc:
         logger.error("Clear collection error: %s", exc, exc_info=True)

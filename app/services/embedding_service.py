@@ -30,7 +30,7 @@ class EmbeddingService:
         return self._model.encode(texts, show_progress_bar=False, normalize_embeddings=True).tolist()
 
     def embed_query(self, query: str) -> list[float]:
-        return self._model.encode([query], show_progress_bar=False, normalize_embeddings=True)[0].tolist()
+        return self._model.encode(query, show_progress_bar=False, normalize_embeddings=True).tolist()
 
     @property
     def embedding_dimension(self) -> int:

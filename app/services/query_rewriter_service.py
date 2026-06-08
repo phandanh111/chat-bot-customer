@@ -4,13 +4,16 @@ import re
 import httpx
 
 from app.config import get_settings
-from app.constants import QUERY_REWRITE_TIMEOUT
+from app.constants import (
+    QUERY_REWRITE_TIMEOUT,
+    QUERY_REWRITER_HISTORY_WINDOW,
+    QUERY_REWRITER_LLM_OPTIONS,
+    SHORT_QUERY_THRESHOLD,
+)
+from app.utils.prompt_utils import format_chat_history
 
 logger = logging.getLogger(__name__)
 
-_SHORT_QUERY_THRESHOLD = 15
-
-# Từ tham chiếu ngữ cảnh — dấu hiệu câu hỏi follow-up cần history để hiểu
 _REFERENCE_PATTERN = re.compile(
     r"\b(thế|vậy|còn|kia|đấy|nó|cái đó|cái kia|cái này|"
     r"loại đó|gói đó|gói kia|chi nhánh đó|ở đó|ở đây|chỗ đó|chỗ đây)\b",
@@ -23,7 +26,6 @@ _SYSTEM_STANDALONE = (
     "mà không cần đọc lịch sử. Chỉ trả về câu query đã viết lại, không giải thích."
 )
 
-# Các pattern xác định → trả về ngay, KHÔNG gọi LLM
 _STATIC_EXPANSIONS: list[tuple[re.Pattern, str]] = [
     (
         re.compile(r"^(giá\s*(gym|tập|vé)?\s*\??)$", re.IGNORECASE),
@@ -57,7 +59,7 @@ class QueryRewriterService:
     def __init__(self) -> None:
         settings = get_settings()
         self._base_url = settings.OLLAMA_BASE_URL
-        self._model = settings.LLM_MODEL
+        self._model = settings.REWRITER_MODEL or settings.LLM_MODEL
         self._client = httpx.AsyncClient(timeout=QUERY_REWRITE_TIMEOUT)
 
     async def close(self) -> None:
@@ -70,20 +72,17 @@ class QueryRewriterService:
                 logger.debug("Static expansion: '%s' → '%s'", query, expansion)
                 return expansion
 
-        is_short = len(q_stripped) < _SHORT_QUERY_THRESHOLD
+        is_short = len(q_stripped) < SHORT_QUERY_THRESHOLD
         has_reference = bool(_REFERENCE_PATTERN.search(query))
 
         if not is_short and not has_reference:
             return query
 
-        history_block = ""
-        if history:
-            recent = history[-4:]
-            lines = [
-                f"{'Khách' if m['role'] == 'user' else 'Bot'}: {m['content'][:200]}"
-                for m in recent
-            ]
-            history_block = "Lịch sử hội thoại:\n" + "\n".join(lines) + "\n\n"
+        history_block = format_chat_history(
+            history or [],
+            window_size=QUERY_REWRITER_HISTORY_WINDOW,
+            max_content_length=200,
+        )
 
         prompt = (
             f"{_EXAMPLES_STANDALONE}"
@@ -97,7 +96,7 @@ class QueryRewriterService:
             "system": _SYSTEM_STANDALONE,
             "stream": False,
             "think": False,
-            "options": {"temperature": 0.0, "num_predict": 30},
+            "options": QUERY_REWRITER_LLM_OPTIONS,
         }
         try:
             response = await self._client.post(f"{self._base_url}/api/generate", json=payload)

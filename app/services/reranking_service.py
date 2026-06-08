@@ -24,7 +24,6 @@ class RerankingService:
         self._model = _get_reranker()
 
     def rerank(self, query: str, documents: list[str], top_k: int) -> list[tuple[int, float]]:
-        """Return list of (original_index, score) sorted by descending score."""
         if not documents:
             return []
         pairs = [(query, doc) for doc in documents]

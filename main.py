@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 
@@ -22,10 +23,34 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
+async def _warmup_model(client, base_url: str, model: str) -> None:
+    try:
+        await client.post(
+            f"{base_url}/api/generate",
+            json={"model": model, "prompt": "hi", "stream": False, "think": False, "options": {"num_predict": 1}},
+            timeout=60.0,
+        )
+        logger.info("Warmed up: %s", model)
+    except Exception as exc:
+        logger.warning("Warmup skipped for %s: %s", model, exc)
+
+
+async def _warmup_ollama(svc) -> None:
+    tasks = [_warmup_model(svc._llm._client, svc._llm._base_url, svc._llm._model)]
+    rewriter_model = svc._query_rewriter._model
+    if rewriter_model != svc._llm._model:
+        tasks.append(_warmup_model(svc._query_rewriter._client, svc._query_rewriter._base_url, rewriter_model))
+    await asyncio.gather(*tasks)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    yield
+    logger.info("Loading embedding model and services...")
     svc = _get_rag_service()
+    logger.info("Embedding model ready. Warming up Ollama...")
+    await _warmup_ollama(svc)
+    logger.info("Server ready.")
+    yield
     await svc._llm.close()
     await svc._query_rewriter.close()
     logger.info("HTTP clients closed.")

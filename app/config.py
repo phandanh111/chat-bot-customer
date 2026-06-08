@@ -12,6 +12,7 @@ class Settings(BaseSettings):
 
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     LLM_MODEL: str = "ministral-3:8b"
+    REWRITER_MODEL: str = ""
 
     EMBED_MODEL: str = "dangvantuan/vietnamese-embedding"
     RERANKER_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
