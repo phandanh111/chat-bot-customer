@@ -1,10 +1,11 @@
 import logging
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import router
+from app.api.routes import _get_rag_service, router
 from app.config import get_settings
 from app.constants import (
     APP_HOST,
@@ -20,7 +21,18 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    svc = _get_rag_service()
+    await svc._llm.close()
+    await svc._query_rewriter.close()
+    logger.info("HTTP clients closed.")
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title=APP_NAME,
     description=(
         "Chatbot chăm sóc khách hàng sử dụng Retrieval Augmented Generation. "

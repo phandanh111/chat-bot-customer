@@ -18,12 +18,14 @@ SYSTEM_PROMPT = f"""Bạn là một trợ lý chăm sóc khách hàng thân thi�
 Nhiệm vụ của bạn là trả lời câu hỏi của khách hàng dựa trên thông tin được cung cấp trong phần "Ngữ cảnh" bên dưới.
 
 Quy tắc QUAN TRỌNG:
-1. CHỈ trả lời chi tiết dựa trên thông tin có trong ngữ cảnh.
+1. Nếu ngữ cảnh đã có thông tin, hãy trả lời ĐẦY ĐỦ và CHI TIẾT theo đúng nội dung đó — không được tóm tắt chung chung hay chuyển hướng sang Fanpage khi đã có đủ dữ liệu.
 2. DANH SÁCH CHI NHÁNH CHÍNH THỨC CỦA THE NEW GYM (Kiến thức nền tảng bắt buộc):
 {_BRANCH_LIST}
    (Nếu khách hỏi chi nhánh ngoài HCM, tự tin mention Biên Hòa, Đà Nẵng, Cần Thơ từ danh sách trên).
-3. Nếu khách hỏi thông tin chi tiết (giá, địa chỉ) mà ngữ cảnh không có, hãy thông báo lịch sự và đề nghị khách liên hệ Fanpage.
-4. Trả lời bằng tiếng Việt, ngắn gọn, gạch đầu dòng mạch lạc."""
+3. Nếu khách hỏi thông tin chi tiết (giá, địa chỉ) mà ngữ cảnh KHÔNG có, hãy thông báo lịch sự và đề nghị khách liên hệ Fanpage hoặc hotline 1900 63 69 20 / email cskh@thenewgym.vn.
+4. Trả lời bằng tiếng Việt, ngắn gọn, gạch đầu dòng mạch lạc.
+5. "PT" trong ngữ cảnh phòng gym = Huấn Luyện Viên Cá Nhân (Personal Trainer), KHÔNG phải viết tắt của "phòng tập".
+6. Với thông tin [HỆ THỐNG MAPS], chỉ được cung cấp TÊN CHI NHÁNH và KHOẢNG CÁCH như đã liệt kê. TUYỆT ĐỐI không được bịa địa chỉ (số nhà, phường, đường) nếu địa chỉ đó không xuất hiện trong ngữ cảnh."""
 
 
 class LLMService:
@@ -32,9 +34,13 @@ class LLMService:
         self._base_url = settings.OLLAMA_BASE_URL
         self._model = settings.LLM_MODEL
         self._timeout = LLM_REQUEST_TIMEOUT
+        self._client = httpx.AsyncClient(timeout=self._timeout)
 
-    async def generate(self, question: str, context: str) -> str:
-        prompt = self._build_prompt(question, context)
+    async def close(self) -> None:
+        await self._client.aclose()
+
+    async def generate(self, question: str, context: str, history: list[dict] | None = None) -> str:
+        prompt = self._build_prompt(question, context, history)
         payload = {
             "model": self._model,
             "prompt": prompt,
@@ -45,15 +51,12 @@ class LLMService:
                 "top_p": 0.9,
                 "num_predict": 1024,
             },
+            "think": False,
         }
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                response = await client.post(
-                    f"{self._base_url}/api/generate",
-                    json=payload,
-                )
-                response.raise_for_status()
-                return response.json().get("response", "").strip()
+            response = await self._client.post(f"{self._base_url}/api/generate", json=payload)
+            response.raise_for_status()
+            return response.json().get("response", "").strip()
 
         except httpx.TimeoutException:
             logger.error("Ollama request timed out after %.1fs", self._timeout)
@@ -67,8 +70,8 @@ class LLMService:
             logger.error("Cannot connect to Ollama at %s", self._base_url)
             return "Không thể kết nối đến máy chủ AI. Vui lòng kiểm tra Ollama đang chạy."
 
-    async def generate_stream(self, question: str, context: str) -> AsyncIterator[str]:
-        prompt = self._build_prompt(question, context)
+    async def generate_stream(self, question: str, context: str, history: list[dict] | None = None) -> AsyncIterator[str]:
+        prompt = self._build_prompt(question, context, history)
         payload = {
             "model": self._model,
             "prompt": prompt,
@@ -79,27 +82,23 @@ class LLMService:
                 "top_p": 0.9,
                 "num_predict": 1024,
             },
+            "think": False,
         }
         try:
-            async with httpx.AsyncClient(timeout=self._timeout) as client:
-                async with client.stream(
-                    "POST",
-                    f"{self._base_url}/api/generate",
-                    json=payload,
-                ) as response:
-                    response.raise_for_status()
-                    async for line in response.aiter_lines():
-                        if not line:
-                            continue
-                        try:
-                            chunk = json.loads(line)
-                        except json.JSONDecodeError:
-                            continue
-                        token = chunk.get("response", "")
-                        if token:
-                            yield token
-                        if chunk.get("done"):
-                            return
+            async with self._client.stream("POST", f"{self._base_url}/api/generate", json=payload) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    token = chunk.get("response", "")
+                    if token:
+                        yield token
+                    if chunk.get("done"):
+                        return
 
         except httpx.TimeoutException:
             logger.error("Ollama stream timed out after %.1fs", self._timeout)
@@ -115,19 +114,27 @@ class LLMService:
 
     async def health_check(self) -> bool:
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(self._base_url)
-                return response.status_code == 200
+            response = await self._client.get(self._base_url)
+            return response.status_code == 200
         except Exception:
             return False
 
     @staticmethod
-    def _build_prompt(question: str, context: str) -> str:
+    def _build_prompt(question: str, context: str, history: list[dict] | None = None) -> str:
+        history_block = ""
+        if history:
+            turns = "\n".join(
+                f"{'Khách' if m['role'] == 'user' else 'Bot'}: {m['content']}"
+                for m in history[-6:]
+            )
+            history_block = f"Lịch sử hội thoại:\n{turns}\n\n"
+
         return (
             f"Ngữ cảnh:\n"
             f"---\n"
             f"{context}\n"
             f"---\n\n"
-            f"Câu hỏi của khách hàng: {question}\n\n"
+            f"{history_block}"
+            f"Câu hỏi hiện tại của khách hàng: {question}\n\n"
             f"Trả lời:"
         )
