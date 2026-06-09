@@ -24,12 +24,12 @@ class MarkdownChunkingService:
             headers_to_split_on=MARKDOWN_HEADERS_TO_SPLIT, strip_headers=False
         )
         self._fallback_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=settings.EXERCISE_EMBED_LIMIT,
+            chunk_size=settings.CHUNK_SIZE,
             chunk_overlap=settings.CHUNK_OVERLAP,
             separators=CHUNK_SEPARATORS,
             length_function=len,
         )
-        self._max_chunk_size = settings.EXERCISE_EMBED_LIMIT
+        self._max_chunk_size = settings.CHUNK_SIZE
 
     def chunk_text(self, text: str, source: str = "unknown", extra_metadata: Optional[dict] = None) -> list[DocumentChunk]:
         if not text or not text.strip():

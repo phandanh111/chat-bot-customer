@@ -12,6 +12,7 @@ from app.constants import (
     LLM_CONNECT_ERROR_REPLY,
     LLM_HTTP_ERROR_REPLY,
     LLM_TIMEOUT_REPLY,
+    MAP_CONTEXT_TAG,
     SUPPORT_EMAIL,
     SUPPORT_HOTLINE,
 )
@@ -33,7 +34,7 @@ Quy tắc QUAN TRỌNG:
 3. Nếu khách hỏi thông tin chi tiết (giá, địa chỉ) mà ngữ cảnh KHÔNG có, hãy thông báo lịch sự và đề nghị khách liên hệ Fanpage hoặc hotline {SUPPORT_HOTLINE} / email {SUPPORT_EMAIL}.
 4. Trả lời bằng tiếng Việt, ngắn gọn, gạch đầu dòng mạch lạc.
 5. "PT" trong ngữ cảnh phòng gym = Huấn Luyện Viên Cá Nhân (Personal Trainer), KHÔNG phải viết tắt của "phòng tập".
-6. Với thông tin [HỆ THỐNG MAPS], chỉ được cung cấp TÊN CHI NHÁNH và KHOẢNG CÁCH như đã liệt kê. TUYỆT ĐỐI không được bịa địa chỉ (số nhà, phường, đường) nếu địa chỉ đó không xuất hiện trong ngữ cảnh."""
+6. Với thông tin {MAP_CONTEXT_TAG}, chỉ được cung cấp TÊN CHI NHÁNH và KHOẢNG CÁCH như đã liệt kê. Phải trả lời đúng thứ tự từ gần đến xa. Tuyệt đối không bịa địa chỉ cụ thể (số nhà, đường, phường) nếu không có trong ngữ cảnh."""
 
 
 class LLMService:

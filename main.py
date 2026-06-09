@@ -36,10 +36,16 @@ async def _warmup_model(client, base_url: str, model: str) -> None:
 
 
 async def _warmup_ollama(svc) -> None:
-    tasks = [_warmup_model(svc._llm._client, svc._llm._base_url, svc._llm._model)]
-    rewriter_model = svc._query_rewriter._model
-    if rewriter_model != svc._llm._model:
-        tasks.append(_warmup_model(svc._query_rewriter._client, svc._query_rewriter._base_url, rewriter_model))
+    client = svc._llm._client
+    base_url = svc._llm._base_url
+    main_model = svc._llm._model
+    rewriter = svc._query_rewriter
+
+    models_to_warm = {main_model}
+    models_to_warm.add(rewriter._main_model)
+    models_to_warm.add(rewriter._rewriter_model)
+
+    tasks = [_warmup_model(client, base_url, m) for m in models_to_warm]
     await asyncio.gather(*tasks)
 
 

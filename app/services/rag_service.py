@@ -220,7 +220,7 @@ class RAGService:
                 None,
                 lambda: self._vector_store.search(
                     query_embedding=query_embedding,
-                    n_results=self._settings.EXERCISE_CONTEXT_LIMIT,
+                    n_results=self._settings.RETRIEVAL_N_RESULTS,
                 ),
             )
 
@@ -251,7 +251,7 @@ class RAGService:
             cached_sources: list[SourceDocument] = []
             source_counts: dict[str, int] = {}
             for i in sorted_indices:
-                if len(context_parts) >= self._settings.RERANKER_TOP_K:
+                if len(context_parts) >= self._settings.TOP_K_RESULTS:
                     break
                 doc = candidate_docs[i]
                 meta = candidate_metas[i]

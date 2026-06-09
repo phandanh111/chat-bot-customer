@@ -34,16 +34,13 @@ RESPONSE_CACHE_TTL_SECONDS: int = 1800
 
 LLM_REQUEST_TIMEOUT: float = 120.0
 QUERY_REWRITE_TIMEOUT: float = 8.0
-CHAT_REQUEST_TIMEOUT: float = 60.0
-HEALTH_CHECK_TIMEOUT: float = 2.0
-COLLECTION_INFO_TIMEOUT: float = 5.0
 
 MAP_GEOCODE_URL: str = "https://nominatim.openstreetmap.org/search"
 MAP_USER_AGENT: str = "TheNewGym-SupportBot/1.0"
 MAP_GEOCODE_TIMEOUT: float = 3.0
 MAP_TOP_K_BRANCHES: int = 3
+MAP_CONTEXT_TAG: str = "[HỆ THỐNG MAPS]"
 
-COMPANY_NAME: str = "The New Gym"
 SUPPORT_HOTLINE: str = "1900 63 69 20"
 SUPPORT_EMAIL: str = "cskh@thenewgym.vn"
 
@@ -55,8 +52,6 @@ APP_NAME: str = "RAG Customer Support Chatbot"
 APP_VERSION: str = "1.0.0"
 APP_HOST: str = "0.0.0.0"
 APP_PORT: int = 8000
-
-STREAMLIT_API_URL: str = "http://localhost:8000"
 
 LOG_FORMAT: str = "%(asctime)s | %(levelname)-7s | %(name)s | %(message)s"
 LOG_DATE_FORMAT: str = "%Y-%m-%d %H:%M:%S"

@@ -59,7 +59,8 @@ class QueryRewriterService:
     def __init__(self) -> None:
         settings = get_settings()
         self._base_url = settings.OLLAMA_BASE_URL
-        self._model = settings.REWRITER_MODEL or settings.LLM_MODEL
+        self._rewriter_model = settings.REWRITER_MODEL or settings.LLM_MODEL
+        self._main_model = settings.LLM_MODEL
         self._client = httpx.AsyncClient(timeout=QUERY_REWRITE_TIMEOUT)
 
     async def close(self) -> None:
@@ -78,12 +79,18 @@ class QueryRewriterService:
         if not is_short and not has_reference:
             return query
 
+        if has_reference and history:
+            model = self._main_model
+        elif is_short:
+            model = self._rewriter_model
+        else:
+            return query
+
         history_block = format_chat_history(
             history or [],
             window_size=QUERY_REWRITER_HISTORY_WINDOW,
             max_content_length=200,
         )
-
         prompt = (
             f"{_EXAMPLES_STANDALONE}"
             f"{history_block}"
@@ -91,7 +98,7 @@ class QueryRewriterService:
             f"Query tìm kiếm độc lập:"
         )
         payload = {
-            "model": self._model,
+            "model": model,
             "prompt": prompt,
             "system": _SYSTEM_STANDALONE,
             "stream": False,
@@ -103,7 +110,7 @@ class QueryRewriterService:
             response.raise_for_status()
             rewritten = response.json().get("response", "").strip().strip("\"'").strip()
             if rewritten:
-                logger.debug("Query rewritten: '%s' → '%s'", query, rewritten)
+                logger.debug("Query rewritten (%s): '%s' → '%s'", model, query, rewritten)
                 return rewritten
         except Exception as exc:
             logger.warning("Query rewrite failed, using original: %s", exc)

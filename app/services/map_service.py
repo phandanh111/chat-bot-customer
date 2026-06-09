@@ -3,6 +3,7 @@ import logging
 import httpx
 
 from app.constants import (
+    MAP_CONTEXT_TAG,
     MAP_GEOCODE_TIMEOUT,
     MAP_GEOCODE_URL,
     MAP_TOP_K_BRANCHES,
@@ -23,7 +24,7 @@ class MapService:
             logger.debug("Static coords hit for '%s'", location_text)
             return STATIC_LOCATION_COORDINATES[normalized]
 
-        params = {"q": f"{location_text}, Ho Chi Minh, Vietnam", "format": "json", "limit": 1}
+        params = {"q": f"{location_text}, Vietnam", "format": "json", "limit": 1}
         try:
             async with httpx.AsyncClient(timeout=MAP_GEOCODE_TIMEOUT) as client:
                 response = await client.get(MAP_GEOCODE_URL, params=params, headers=self._headers)
@@ -53,12 +54,11 @@ class MapService:
         )[:top_k]
 
         lines = [
-            f"\n[HỆ THỐNG MAPS: Khách hàng đang ở '{location_text}'. CHI NHÁNH GẦN NHẤT LÀ {ranked[0][0]}.",
-            "Danh sách xếp hạng từ Gần Nhất đến Xa Hơn:",
+            f"\n{MAP_CONTEXT_TAG}: Khách hàng đang ở '{location_text}'. Chi nhánh gần nhất là {ranked[0][0]}.",
+            "Danh sách xếp hạng từ gần nhất đến xa hơn:",
         ]
-        for i, (name, dist) in enumerate(ranked):
-            label = "Gần Nhất" if i == 0 else "Xa hơn"
-            lines.append(f"Top {i + 1} ({label}): {name} (khoảng cách {dist:.1f} km)")
-        lines.append("LLM BẮT BUỘC PHẢI DỰA VÀO ĐÚNG THỨ TỰ NÀY, TUYỆT ĐỐI KHÔNG ĐẢO NGƯỢC THỨ TỰ GẦN XA!]\n")
+        for i, (name, dist) in enumerate(ranked, start=1):
+            lines.append(f"Top {i}: {name} (khoảng cách {dist:.1f} km)")
+        lines.append(f"/{MAP_CONTEXT_TAG}\n")
 
         return "\n".join(lines)

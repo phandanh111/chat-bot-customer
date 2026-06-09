@@ -15,7 +15,7 @@ class ChunkingService:
     def __init__(self) -> None:
         settings = get_settings()
         self._splitter = RecursiveCharacterTextSplitter(
-            chunk_size=settings.EXERCISE_EMBED_LIMIT,
+            chunk_size=settings.CHUNK_SIZE,
             chunk_overlap=settings.CHUNK_OVERLAP,
             separators=CHUNK_SEPARATORS,
             length_function=len,

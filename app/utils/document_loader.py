@@ -22,12 +22,12 @@ def load_document(file_path: str | Path) -> str:
 
     if extension in (".txt", ".md"):
         return _load_text_file(file_path)
-    elif extension == ".pdf":
+    if extension == ".pdf":
         return _load_pdf_file(file_path)
-    elif extension == ".docx":
+    if extension == ".docx":
         return _load_docx_file(file_path)
 
-    return ""
+    raise NotImplementedError(f"No loader implemented for extension: '{extension}'")
 
 
 def _load_text_file(file_path: Path) -> str:
