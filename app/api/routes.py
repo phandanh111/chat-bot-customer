@@ -10,6 +10,7 @@ from app.models.schemas import (
     ChatRequest,
     ChatResponse,
     CollectionInfoResponse,
+    DocumentUpdateRequest,
     IngestResponse,
 )
 from app.services.rag_service import RAGService
@@ -118,6 +119,65 @@ async def clear_collection():
     except Exception as exc:
         logger.error("Clear collection error: %s", exc, exc_info=True)
         raise HTTPException(status_code=500, detail="Lỗi khi xóa collection.")
+
+
+@router.post("/cache/clear")
+async def clear_cache():
+    try:
+        _get_rag_service().clear_cache()
+        return {"message": "Cache đã được xóa thành công."}
+    except Exception as exc:
+        logger.error("Clear cache error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi xóa cache.")
+
+
+@router.get("/documents")
+async def list_documents():
+    try:
+        return {"documents": _get_rag_service().list_documents()}
+    except Exception as exc:
+        logger.error("List documents error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi lấy danh sách tài liệu.")
+
+
+@router.get("/documents/{filename}")
+async def get_document(filename: str):
+    try:
+        content = _get_rag_service().get_document_content(filename)
+        return {"filename": filename, "content": content}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Tài liệu '{filename}' không tìm thấy.")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.error("Get document error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi đọc tài liệu.")
+
+
+@router.put("/documents/{filename}")
+async def update_document(filename: str, request: DocumentUpdateRequest):
+    try:
+        n_chunks = _get_rag_service().update_document(filename, request.content)
+        return {"message": f"Đã cập nhật '{filename}' và re-ingest thành công.", "total_chunks": n_chunks}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Tài liệu '{filename}' không tìm thấy.")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:
+        logger.error("Update document error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi cập nhật tài liệu.")
+
+
+@router.delete("/documents/{filename}")
+async def delete_document(filename: str):
+    try:
+        _get_rag_service().delete_document(filename)
+        return {"message": f"Đã xóa tài liệu '{filename}' thành công."}
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Tài liệu '{filename}' không tìm thấy.")
+    except Exception as exc:
+        logger.error("Delete document error: %s", exc, exc_info=True)
+        raise HTTPException(status_code=500, detail="Lỗi khi xóa tài liệu.")
 
 
 @router.get("/health")

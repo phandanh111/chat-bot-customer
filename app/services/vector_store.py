@@ -46,6 +46,14 @@ class VectorStoreService:
             "metadata": self._collection.metadata,
         }
 
+    def delete_by_source(self, source: str) -> int:
+        results = self._collection.get(where={"source": source}, include=[])
+        if not results["ids"]:
+            return 0
+        self._collection.delete(ids=results["ids"])
+        logger.info("Deleted %d chunks for source '%s'.", len(results["ids"]), source)
+        return len(results["ids"])
+
     def clear_collection(self) -> None:
         settings = get_settings()
         self._client.delete_collection(name=settings.COLLECTION_NAME)

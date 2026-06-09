@@ -11,6 +11,7 @@ from app.config import get_settings
 from app.constants import (
     ACRONYM_NORMALIZATIONS,
     CONTEXT_CACHE_MAX_SIZE,
+    DOCUMENTS_DIR,
     CONTEXT_CACHE_TTL_SECONDS,
     LLM_HISTORY_WINDOW,
     LOCATION_KEYWORD_PATTERNS,
@@ -65,6 +66,46 @@ class RAGService:
 
     def clear_collection(self) -> None:
         self._vector_store.clear_collection()
+
+    def clear_cache(self) -> None:
+        _CONTEXT_CACHE.clear()
+        _RESPONSE_CACHE.clear()
+        logger.info("Context and response caches cleared.")
+
+    def list_documents(self) -> list[str]:
+        if not DOCUMENTS_DIR.exists():
+            return []
+        return sorted(
+            p.name for p in DOCUMENTS_DIR.iterdir()
+            if p.suffix.lower() in SUPPORTED_DOCUMENT_EXTENSIONS
+        )
+
+    def get_document_content(self, filename: str) -> str:
+        path = DOCUMENTS_DIR / filename
+        if not path.exists():
+            raise FileNotFoundError(filename)
+        if path.suffix.lower() not in {".txt", ".md"}:
+            raise ValueError(f"Không thể đọc nội dung file '{path.suffix}'. Chỉ hỗ trợ .txt và .md.")
+        return path.read_text(encoding="utf-8")
+
+    def update_document(self, filename: str, content: str) -> int:
+        path = DOCUMENTS_DIR / filename
+        if not path.exists():
+            raise FileNotFoundError(filename)
+        if path.suffix.lower() not in {".txt", ".md"}:
+            raise ValueError(f"Không thể chỉnh sửa file '{path.suffix}'. Hãy re-upload thay thế.")
+        path.write_text(content, encoding="utf-8")
+        self.clear_cache()
+        return self.ingest_file(path)
+
+    def delete_document(self, filename: str) -> None:
+        path = DOCUMENTS_DIR / filename
+        if not path.exists():
+            raise FileNotFoundError(filename)
+        self._vector_store.delete_by_source(filename)
+        path.unlink()
+        self.clear_cache()
+        logger.info("Deleted document '%s'.", filename)
 
     def ingest_file(self, file_path: str | Path) -> int:
         file_path = Path(file_path)

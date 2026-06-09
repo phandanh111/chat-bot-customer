@@ -47,3 +47,7 @@ class CollectionInfoResponse(BaseModel):
     collection_name: str
     total_documents: int
     metadata: Optional[dict] = None
+
+
+class DocumentUpdateRequest(BaseModel):
+    content: str = Field(..., min_length=1)
